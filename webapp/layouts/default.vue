@@ -116,10 +116,13 @@ export default {
           .catch(e => {
             this.user = { isAuthorized: false, name: user.displayName };
           })
+          .finally(() => {
+            this.loadingUser = false;
+          });
       } else {
         this.user = null;
+        this.loadingUser = false;
       }
-      this.loadingUser = false;
     });
   },
   filters: {
