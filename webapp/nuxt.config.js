@@ -10,8 +10,7 @@ export default {
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
-    titleTemplate: '%s - webapp',
-    title: 'webapp',
+    title: 'KarlGPT',
     htmlAttrs: {
       lang: 'en'
     },
@@ -32,7 +31,7 @@ export default {
 
   // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
   plugins: [
-    '@/plugins/firebase.js'
+    { src: '~/plugins/firebase.js', mode: 'client'}
   ],
 
   // Auto import components: https://go.nuxtjs.dev/config-components

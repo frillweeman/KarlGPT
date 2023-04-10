@@ -1,5 +1,5 @@
 <template>
-  <v-card :loading="isLoading" class="chat text-left" :class="role">
+  <v-card :loading="isLoading" class="my-4 chat text-left" :class="role">
     <v-card-text>
       <div v-html="htmlContent"></div>
     </v-card-text>

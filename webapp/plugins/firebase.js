@@ -1,4 +1,7 @@
 import * as firebase from 'firebase/app';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
+import { getFunctions, connectFunctionsEmulator, httpsCallable } from 'firebase/functions';
 
 const firebaseConfig = {
   apiKey: "AIzaSyAwmzo0xD-Aa9tQmGuNk3LUCO-dogbSn4M",
@@ -10,8 +13,16 @@ const firebaseConfig = {
   measurementId: "G-G463H4N8XB"
 };
 
-// if (process.env.NODE_ENV === 'development') {
-//   firebase.fun .useFunctionsEmulator('http://localhost:5001')
-// }
+// initialize the app
+const firebaseApp = firebase.initializeApp(firebaseConfig);
 
-firebase.initializeApp(firebaseConfig);
+if (process.env.NODE_ENV === 'development') {
+  connectFunctionsEmulator(getFunctions(), "localhost", 5001);
+}
+
+export default (context, inject) => {
+  inject("app", firebaseApp);
+  inject("auth", getAuth());
+  inject("firestore", getFirestore());
+  inject("getFirebaseFunction", (functionName) => httpsCallable(getFunctions(), functionName));
+}

@@ -1,5 +1,15 @@
 {
   "projects": {
     "default": "chatgpt-19270"
-  }
+  },
+  "targets": {
+    "chatgpt-19270": {
+      "hosting": {
+        "karlgpt": [
+          "karlgpt"
+        ]
+      }
+    }
+  },
+  "etags": {}
 }

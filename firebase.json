@@ -6,6 +6,7 @@
     ]
   },
   "hosting": {
+    "target": "karlgpt",
     "public": "webapp/dist",
     "ignore": [
       "firebase.json",
