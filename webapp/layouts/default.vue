@@ -40,7 +40,12 @@
     </v-app-bar>
     <v-main>
       <v-container class="justify-center" fluid style="height:100%">
-        <Nuxt v-if="loadingUser || (user && user.isAuthorized)" />
+        <v-row v-if="loadingUser" class="justify-center align-center text-center" style="height: 100%">
+          <v-col cols="12" md="8">
+            <v-progress-circular indeterminate />
+          </v-col>
+        </v-row>
+        <Nuxt v-else-if="user && user.isAuthorized" />
         <v-row v-else class="justify-center align-center" style="height: 100%">
           <v-col cols="12" md="8">
             <v-card>
@@ -110,7 +115,6 @@ export default {
         const logIn = this.$getFirebaseFunction("login");
         logIn({ uid: user.uid, name: user.displayName })
           .then(({data}) => {
-            console.log(data);
             this.user = data;
           })
           .catch(e => {

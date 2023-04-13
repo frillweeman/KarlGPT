@@ -1,6 +1,6 @@
 <template>
   <div class="chat-window">
-    <div ref="messages" class="chat-messages">
+    <div class="chat-messages">
       <div v-for="(message, i) in messages" :key="i" :class="message.role">
         <div class="message">
           <chat-message :ref="'msg' + i" :role="message.role" :htmlContent="message.content" />
@@ -9,6 +9,9 @@
     </div>
     <v-app-bar bottom fixed class="message-bar">
       <v-text-field
+        autocomplete="off"
+        ref="prompt"
+        id="prompt"
         autofocus
         v-model="prompt"
         hide-details
@@ -33,10 +36,19 @@ export default {
   },
   data: () => ({
     prompt: "",
-    messages: [],
+    messages: [{
+      role: "assistant",
+      content: "Hi, I'm Karl, a homeless assistant. How can I help?"
+    }],
     loading: false,
   }),
   methods: {
+    onKeyPress(e) {
+      if (e.key === "/" && document.activeElement.id !== "prompt") {
+        e.preventDefault();
+        this.$refs.prompt.focus();
+      }
+    },
     scrollToBottom() {
       this.$nextTick(() => {
         this.$refs['msg' + (this.messages.length - 1)][0].$el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -51,7 +63,7 @@ export default {
       this.prompt = "";
 
       const getGPTResponse = this.$getFirebaseFunction("getResponse");
-      getGPTResponse({ messages: this.messages.slice(0, -1) })
+      getGPTResponse({ messages: this.messages.slice(1, -1) })
         .then(result => {
           const htmlContent = marked.parse(result.data.content);
           this.messages.splice(this.messages.length - 1, 1, { role: "assistant", content: htmlContent });
@@ -64,7 +76,12 @@ export default {
           this.loading = false;
         });
     },
-    
+  },
+  mounted() {
+    window.addEventListener("keypress", this.onKeyPress);
+  },
+  beforeDestroy() {
+    window.removeEventListener("keypress", this.onKeyPress);
   }
 }
 </script>
