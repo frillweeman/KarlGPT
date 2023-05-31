@@ -36,12 +36,13 @@
           </v-list-item>
         </v-list>
       </v-menu>
-      <v-btn v-else @click="login" text>Log In<v-icon right>mdi-account-circle</v-icon></v-btn>
+      <v-btn v-else :disabled="loadingUser" @click="login" text>Log In<v-icon right>mdi-account-circle</v-icon></v-btn>
     </v-app-bar>
     <v-main>
       <v-container class="justify-center" fluid style="height:100%">
         <v-row v-if="loadingUser" class="justify-center align-center text-center" style="height: 100%">
           <v-col cols="12" md="8">
+            <h2 class="my-8">Signing You In</h2>
             <v-progress-circular indeterminate />
           </v-col>
         </v-row>
@@ -81,6 +82,11 @@ export default {
           title: 'Chat',
           to: '/'
         },
+        {
+          icon: 'mdi-robot',
+          title: 'Personas',
+          to: '/personas'
+        }
       ],
       miniVariant: false,
       right: true,
@@ -136,3 +142,22 @@ export default {
   }
 }
 </script>
+
+<style>
+/* For WebKit-based browsers (Chrome, Safari, Opera) */
+::-webkit-scrollbar {
+  width: 0;
+}
+
+::-webkit-scrollbar-track {
+  background-color: transparent; /* Set to a transparent color */
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: transparent; /* Set to a transparent color */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: transparent; /* Set to a transparent color */
+}
+</style>
