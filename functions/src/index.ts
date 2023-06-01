@@ -2,6 +2,7 @@ import * as functions from 'firebase-functions';
 import * as admin from 'firebase-admin';
 import { OpenAIApi, Configuration } from "openai";
 import * as dotenv from 'dotenv';
+import { systemPromptFromPersona } from './persona';
 
 dotenv.config();
 admin.initializeApp();
@@ -10,7 +11,7 @@ const openai = new OpenAIApi(new Configuration({
 }));
 
 // POST route for getting an automated chat response given a list of existing messages
-export const getResponse = functions.https.onCall(async ({ messages }, context) => {
+export const getResponse = functions.https.onCall(async ({ messages, persona }, context) => {
   if (!context.auth) {
     throw new functions.https.HttpsError(
       "unauthenticated",
@@ -20,7 +21,7 @@ export const getResponse = functions.https.onCall(async ({ messages }, context) 
 
   const systemMessage = {
     "role": "system",
-    "content": `You are Karl, a cynical homeless conspiracy theorist, confident in his beliefs, with immense knowledge of the world. Answer as concisely as possible, with slang, and in the dialect of a homeless person with broken english.`
+    "content": systemPromptFromPersona(persona)
   };
   const { data } = await openai.createChatCompletion({
     model: "gpt-3.5-turbo",
@@ -44,3 +45,5 @@ export const login = functions.https.onCall(async ({ uid, name }, context) => {
     return { name, isAuthorized: false };
   }
 });
+
+export * from './persona';
