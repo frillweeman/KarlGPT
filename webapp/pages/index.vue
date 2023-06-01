@@ -2,7 +2,7 @@
   <div class="chat-window">
     <div class="chat-messages">
       <div class="d-flex justify-center my-2">
-        <v-select prepend-icon="mdi-robot" disabled @change="handlePersonaChange" :items="[...availablePersonas, CreateMorePersona]" v-model="persona" hide-details :item-text="p => p.name" :item-value="p => p" outlined label="Persona" class="persona-switcher" />
+        <v-select prepend-icon="mdi-robot" @change="handlePersonaChange" :items="[...personas, CreateMorePersona]" v-model="persona" hide-details :item-text="p => p.name" :item-value="p => p" outlined label="Persona" class="persona-switcher" />
       </div>
       <v-divider class="my-4" />
       <div v-for="(message, i) in messages" :key="i" :class="message.role">
@@ -31,7 +31,8 @@
 
 <script>
 import * as marked from "marked";
-import ChatMessage from '@/components/ChatMessage.vue'
+import ChatMessage from '@/components/ChatMessage.vue';
+import { mapState } from "vuex";
 
 const CreateMorePersona = {
   name: "Create a persona...",
@@ -45,27 +46,14 @@ export default {
   },
   data: () => ({
     CreateMorePersona,
-    persona: {
-      name: "Karl",
-      _id: "60f3b0a0c9b0a3b4b4f1e2a0",
-    },
-    availablePersonas: [ // TODO: retrieve this from Vuex store
-      {
-        name: "Karl",
-        _id: "60f3b0a0c9b0a3b4b4f1e2a0",
-      },
-      {
-        name: "Walter White",
-        _id: "60f3b0a0c9b0a3b4b4f1e2a1",
-      },
-    ],
+    persona: undefined,
     prompt: "",
-    messages: [{
-      role: "assistant",
-      content: "Hi, I'm Karl, a homeless assistant. How can I help?"
-    }],
+    messages: [],
     loading: false,
   }),
+  computed: {
+    ...mapState(["personas"]),
+  },
   methods: {
     handlePersonaChange(persona){
       if (persona._id === "create") {
@@ -94,7 +82,7 @@ export default {
       this.prompt = "";
 
       const getGPTResponse = this.$getFirebaseFunction("getResponse");
-      getGPTResponse({ messages: this.messages.slice(1, -1) })
+      getGPTResponse({ messages: this.messages.slice(1, -1), persona: this.persona })
         .then(result => {
           const htmlContent = marked.parse(result.data.content);
           this.messages.splice(this.messages.length - 1, 1, { role: "assistant", content: htmlContent });
@@ -107,9 +95,26 @@ export default {
           this.loading = false;
         });
     },
+    setDefaultPersona() {
+      if (this.persona === undefined && this.personas.length > 0) {
+        this.persona = this.personas[0];
+      }
+    }
+  },
+  watch: {
+    persona() {
+      this.messages = [{
+        role: "assistant",
+        content: this.persona.greeting
+      }];
+    },
+    personas() {
+      this.setDefaultPersona();
+    }
   },
   mounted() {
     window.addEventListener("keypress", this.onKeyPress);
+    this.setDefaultPersona();
   },
   beforeDestroy() {
     window.removeEventListener("keypress", this.onKeyPress);

@@ -46,6 +46,12 @@
             <v-progress-circular indeterminate />
           </v-col>
         </v-row>
+        <v-row v-else-if="loadingPersonas" class="justify-center align-center text-center" style="height: 100%">
+          <v-col cols="12" md="8">
+            <h2 class="my-8">Loading Personas</h2>
+            <v-progress-circular indeterminate />
+          </v-col>
+        </v-row>
         <Nuxt v-else-if="user && user.isAuthorized" />
         <v-row v-else class="justify-center align-center" style="height: 100%">
           <v-col cols="12" md="8">
@@ -68,12 +74,14 @@
 
 <script>
 import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
+import { mapActions } from "vuex";
 
 export default {
   name: 'DefaultLayout',
   data () {
     return {
       loadingUser: true,
+      loadingPersonas: true,
       user: null,
       drawer: false,
       items: [
@@ -95,6 +103,7 @@ export default {
     }
   },
   methods: {
+    ...mapActions(["setPersonas"]),
     login() {
       const auth = getAuth();
       const provider = new GoogleAuthProvider();
@@ -122,6 +131,8 @@ export default {
         logIn({ uid: user.uid, name: user.displayName })
           .then(({data}) => {
             this.user = data;
+            this.setPersonas()
+              .finally(() => { this.loadingPersonas = false })
           })
           .catch(e => {
             this.user = { isAuthorized: false, name: user.displayName };

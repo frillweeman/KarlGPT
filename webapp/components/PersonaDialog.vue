@@ -1,31 +1,42 @@
 <template>
-<v-dialog :value="value" @click:outside="$emit('close', false)">
+<v-dialog :value="value" @click:outside="$emit('close', { action: null, persona: null })">
   <v-card>
     <v-card-title>
-      <span class="headline">{{ persona.name }}</span>
+      <span class="headline">{{ personaCopy.name }}</span>
     </v-card-title>
     <v-card-text>
       <v-form>
         <v-select
           class="type-select"
-          v-model="persona.type"
+          v-model="personaCopy.type"
           :items="Object.keys(personaTemplates)"
           label="Type"
           required
         ></v-select>
         <v-text-field
-          v-for="param in personaTemplates[persona.type].params"
+          v-model="personaCopy.name"
+          label="Persona Name"
+          required
+        ></v-text-field>
+        <v-text-field
+          v-for="param in personaTemplates[personaCopy.type].parameters"
           :key="param"
-          v-model="persona.parameters[param]"
+          v-model="personaCopy.parameters[param]"
           :label="param"
+          required
+        ></v-text-field>
+        <v-text-field
+          v-model="personaCopy.greeting"
+          label="Greeting"
           required
         ></v-text-field>
       </v-form>
     </v-card-text>
     <v-card-actions>
+      <v-btn text color="error" @click="$emit('close', { action: 'DELETE', persona: personaCopy })" :disabled="!personaCopy.id">Delete</v-btn>
       <v-spacer></v-spacer>
       <v-btn text @click="$emit('close', false)">Cancel</v-btn>
-      <v-btn disabled color="primary" @click="$emit('close', false)">Save</v-btn>
+      <v-btn color="primary" @click="$emit('close', { action: 'UPDATE', persona: personaCopy })">Save</v-btn>
     </v-card-actions>
   </v-card>
 </v-dialog>
@@ -45,17 +56,24 @@ export default {
     },
   },
   data: () => ({
+    personaCopy: undefined,
     personaTemplates: {
-      celebrity: {
-        params: ["character", "from"],
-        tempalte: "I want you to act like {character} from {from}. I want you to respond and answer like {character} using the tone, manner and vocabulary {character} would use. Do not write any explanations. Only answer like {Walter White}. You must know all of the knowledge of {character}."
+      Celebrity: {
+        parameters: ["character", "from"],
       },
-      custom: {
-        params: ["default"],
-        template: "{default}"
+      Custom: {
+        parameters: ["prompt"],
       }
     },
   }),
+  watch: {
+    persona: {
+      handler: function (newVal) {
+        this.personaCopy = JSON.parse(JSON.stringify(newVal));
+      },
+      immediate: true,
+    },
+  },
 }
 </script>
 
