@@ -1,34 +1,45 @@
 <template>
-<v-dialog :value="value" @click:outside="$emit('close', { action: null, persona: null })">
+<v-dialog max-width="600" :value="value" @click:outside="$emit('close', false)">
   <v-card>
     <v-card-title>
-      <span class="headline">{{ personaCopy.name }}</span>
+      <span class="headline">{{ personaCopy.name || "New Persona" }}</span>
     </v-card-title>
     <v-card-text>
       <v-form>
         <v-select
-          class="type-select"
+          class="text-input"
           v-model="personaCopy.type"
           :items="Object.keys(personaTemplates)"
           label="Type"
           required
+          persistent-hint
+          :hint="personaTemplates[personaCopy.type].description"
         ></v-select>
         <v-text-field
+          class="text-input"
           v-model="personaCopy.name"
           label="Persona Name"
           required
+          hint="Your name for the persona."
+          persistent-hint
         ></v-text-field>
         <v-text-field
+          class="text-input"
           v-for="param in personaTemplates[personaCopy.type].parameters"
-          :key="param"
-          v-model="personaCopy.parameters[param]"
-          :label="param"
+          :key="param.name"
+          v-model="personaCopy.parameters[param.name]"
+          :label="param.name"
           required
+          :hint="param.hint"
+          persistent-hint
         ></v-text-field>
         <v-text-field
+          class="text-input"
           v-model="personaCopy.greeting"
           label="Greeting"
           required
+          hint="The greeting message used by this persona."
+          persistent-hint
         ></v-text-field>
       </v-form>
     </v-card-text>
@@ -59,10 +70,21 @@ export default {
     personaCopy: undefined,
     personaTemplates: {
       Celebrity: {
-        parameters: ["character", "from"],
+        parameters: [{
+          name: "character",
+          hint: "The name of the character.",
+        }, {
+          name: "from",
+          hint: "The name of the show or movie.",
+        }],
+        description: "With a Celebrity Persona, you can chat with a famous character.",
       },
       Custom: {
-        parameters: ["prompt"],
+        parameters: [{
+          "name": "prompt",
+          hint: "The prompt to use for the persona.",
+        }],
+        description: "With a Custom Persona, you can manually enter the prompt sent to ChatGPT.",
       }
     },
   }),
@@ -78,7 +100,7 @@ export default {
 </script>
 
 <style scoped>
-.type-select {
-  max-width: 250px;
+.text-input {
+  max-width: 450px;
 }
 </style>

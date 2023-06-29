@@ -7,7 +7,7 @@ export const mutations = {
   setUser(state, user) {
     state.user = user;
   },
-  setPersonas(state, personas) {
+  mutatePersonas(state, personas) {
     state.personas = personas;
   },
 };
@@ -15,7 +15,7 @@ export const mutations = {
 export const actions = {
   setPersonas({ commit }) {
     return this.$getFirebaseFunction("getUserPersonas")().then((result) => {
-      commit("setPersonas", result.data);
+      commit("mutatePersonas", result.data);
     });
   }
 };
