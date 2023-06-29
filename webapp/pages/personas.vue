@@ -1,17 +1,37 @@
 <template>
   <v-card>
     <v-card-title>Personas</v-card-title>
-    <v-card-subtitle>Create your own personas you'd like to chat with.</v-card-subtitle>
+    <v-card-subtitle>Create your own characters you'd like to chat with.</v-card-subtitle>
     <v-card-text>
       <v-data-table
         disable-sort
         disable-pagination
         hide-default-footer
         :headers="headers"
-        :items="personas"
+        :items="promisePending ? [] : personas"
+        :loading="promisePending"
       >
         <template #[`item.actions`]="{item}">
-          <v-btn :disabled="item.id === -1" @click="selectedPersona = item" text><v-icon left>mdi-eye</v-icon>View</v-btn>
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn v-on="on" v-bind="attrs" :disabled="item.id === -1" @click="selectedPersona = item" icon><v-icon>mdi-file-edit</v-icon></v-btn>
+            </template>
+            <span>Edit</span>
+          </v-tooltip>
+
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn v-on="on" v-bind="attrs" :disabled="item.id === -1" @click="stagedForDeletion = item" icon><v-icon>mdi-delete</v-icon></v-btn>
+            </template>
+            <span>Delete</span>
+          </v-tooltip>
+
+          <v-tooltip bottom>
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn v-on="on" v-bind="attrs" :disabled="item.id === -1" @click="sharePersona(item)" icon><v-icon>mdi-share</v-icon></v-btn>
+            </template>
+            <span>Share</span>
+          </v-tooltip>
         </template>
       </v-data-table>
       <v-card-actions>
@@ -20,19 +40,26 @@
       </v-card-actions>
     </v-card-text>
     <persona-dialog @close="handleDialogClose" :value="selectedPersona !== undefined" :persona="selectedPersona" v-if="selectedPersona !== undefined" />
+    <delete-confirmation @close="handleDialogClose" :value="stagedForDeletion !== undefined" :persona="stagedForDeletion" v-if="stagedForDeletion !== undefined" />
+    <v-snackbar :value="copied" color="green"><v-icon left>mdi-content-paste</v-icon>Copied to Clipboard</v-snackbar>
   </v-card>
 </template>
 
 <script>
 import PersonaDialog from '@/components/PersonaDialog.vue'
-import { mapState, mapActions } from "vuex";
+import DeleteConfirmation from "@/components/DeleteConfirmation.vue";
+import { mapState, mapActions, mapMutations } from "vuex";
 export default {
   name: "PersonasPage",
   components: {
     PersonaDialog,
+    DeleteConfirmation,
   },
   data: () => ({
+    promisePending: false,
     selectedPersona: undefined,
+    stagedForDeletion: undefined,
+    copied: false,
     headers: [
       {
         text: "Name",
@@ -55,6 +82,20 @@ export default {
   },
   methods: {
     ...mapActions(["setPersonas"]),
+    ...mapMutations(["mutatePersonas"]),
+    sharePersona(persona) {
+      this.$getFirebaseFunction("sharePersona")(persona.id)
+        .then(({ data }) => {
+          this.$copyText(data.url);
+          this.copied = true;
+          setTimeout(() => {
+            this.copied = false;
+          }, 5000);
+        })
+        .catch((error) => {
+          console.error(error);
+        });
+    },
     handleDialogClose({ action, persona }) {
       let promise = null;
       if (action === "UPDATE") {
@@ -69,9 +110,17 @@ export default {
         promise = this.deletePersona(persona.id);
       }
       if (promise) {
+        this.selectedPersona = undefined;
+        this.stagedForDeletion = undefined;
+        this.mutatePersonas([]);
+        this.promisePending = true;
+        console.log("promise pending: ", this.promisePending);
         promise
           .then(() => {
-            this.selectedPersona = undefined;
+            this.setPersonas()
+              .finally(() => {
+                this.promisePending = false;
+              });
           })
           .catch((error) => {
             console.error(error);
@@ -81,6 +130,7 @@ export default {
           });
       } else {
         this.selectedPersona = undefined;
+        this.stagedForDeletion = undefined;
       }
       // TODO: clean this mess up
     },
@@ -88,36 +138,18 @@ export default {
       this.selectedPersona = {
         name: "",
         type: "Celebrity",
-        parameters: { prompt: "" },
+        parameters: {},
         greeting: ""
       };
     },
     createPersona(persona) {
-      this.$getFirebaseFunction("createPersona")(persona)
-        .then(() => {
-          this.setPersonas();
-        })
-        .catch((error) => {
-          console.error(error);
-        });
+      return this.$getFirebaseFunction("createPersona")(persona)
     },
     updatePersona(persona) {
-      this.$getFirebaseFunction("updatePersona")(persona)
-        .then(() => {
-          this.setPersonas();
-        })
-        .catch((error) => {
-          console.error(error);
-        });
+      return this.$getFirebaseFunction("updatePersona")(persona)
     },
     deletePersona(personaId) {
-      this.$getFirebaseFunction("deletePersona")(personaId)
-        .then(() => {
-          this.setPersonas();
-        })
-        .catch((error) => {
-          console.error(error);
-        });
+      return this.$getFirebaseFunction("deletePersona")(personaId)
     },
   }
 }

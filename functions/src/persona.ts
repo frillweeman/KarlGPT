@@ -13,6 +13,9 @@ const DefaultPersona = {
   greeting: "Hi, I'm Karl, a homeless assistant. How can I help?"
 };
 
+// TODO: fix this!!!
+export const BASE_URL = process.env.NODE_ENV === "production" ? "https://karlgpt.com" : "http://localhost:3000";
+
 export const getUserPersonas = functions.https.onCall(async (_, context) => {
   if (!context.auth && process.env.FUNCTIONS_EMULATOR !== "true") {
     throw new functions.https.HttpsError(
@@ -123,6 +126,74 @@ export const updatePersona = functions.https.onCall(async ({ id, name, type, par
     greeting
   });
   return "Persona updated.";
+});
+
+export const sharePersona = functions.https.onCall(async (id, context) => {
+  if (!context.auth && process.env.FUNCTIONS_EMULATOR !== "true") {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "The function must be called while authenticated."
+    );
+  }
+
+  // user document holds array of persona ids
+  const personasRef = admin.firestore().collection("personas");
+
+  const personaRef = personasRef.doc(id);
+  const persona = await personaRef.get();
+  if (persona.data()?.owner !== context.auth?.uid)
+    throw new functions.https.HttpsError("permission-denied", "User does not own persona.");
+  await personaRef.update({
+    public: true
+  });
+  return {
+    shared: true,
+    url: `${BASE_URL}/persona/${id}`
+  };
+});
+
+export const getSharedPersona = functions.https.onCall(async (id, context) => {
+  const personaRef = admin.firestore().collection("personas").doc(id);
+  const personaSnapshot = await personaRef.get();
+  if (!personaSnapshot.exists) {
+    throw new functions.https.HttpsError("not-found", "Persona not found.");
+  }
+  const personaData = personaSnapshot.data();
+  if (!personaData?.public) {
+    throw new functions.https.HttpsError("permission-denied", "Persona is not public.");
+  }
+  return personaData;
+});
+
+
+export const copySharedPersona = functions.https.onCall(async (id, context) => {
+  if (!context.auth && process.env.FUNCTIONS_EMULATOR !== "true") {
+    throw new functions.https.HttpsError(
+      "unauthenticated",
+      "The function must be called while authenticated."
+    );
+  }
+
+  const personasRef = admin.firestore().collection("personas");
+  // copy persona document to a new document, and add a reference to it in the user document
+  const personaRef = personasRef.doc(id);
+  const persona = await personaRef.get();
+  const personaData = persona.data();
+  if (!personaData?.public)
+    throw new functions.https.HttpsError("permission-denied", "Persona is not public.");
+  const newPersonaRef = await personasRef.add({
+    ...personaData,
+    owner: context.auth?.uid || DummyUUID, // TODO: remove dummy uuid
+    public: false
+  });
+  const userRef = admin.firestore().collection("users").doc(context.auth?.uid || DummyUUID); // TODO: remove dummy uuid
+  await userRef.update({
+    personas: FieldValue.arrayUnion(newPersonaRef.id)
+  });
+  return {
+    ...personaData,
+    id: newPersonaRef.id
+  };
 });
 
 

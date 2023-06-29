@@ -25,4 +25,22 @@ export default (context, inject) => {
   inject("auth", getAuth());
   inject("firestore", getFirestore());
   inject("getFirebaseFunction", (functionName) => httpsCallable(getFunctions(), functionName));
+  inject("copyText", (text) => { // improve this later
+    // Create a temporary textarea element
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'absolute';
+    textarea.style.left = '-9999px';
+
+    // Append the textarea to the document
+    document.body.appendChild(textarea);
+
+    // Select and copy the text
+    textarea.select();
+    document.execCommand('copy');
+
+    // Remove the textarea from the document
+    document.body.removeChild(textarea);
+  })
 }

@@ -24,7 +24,7 @@
     </v-navigation-drawer>
     <v-app-bar fixed app>
       <v-app-bar-nav-icon @click.stop="drawer = !drawer" />
-      <v-toolbar-title>{{ title }}</v-toolbar-title>
+      <v-toolbar-title><v-img style="height: 48px" contain src="/logo.webp" /></v-toolbar-title>
       <v-spacer />
       <v-menu v-if="user">
         <template v-slot:activator="{ on }">
@@ -39,7 +39,7 @@
       <v-btn v-else :disabled="loadingUser" @click="login" text>Log In<v-icon right>mdi-account-circle</v-icon></v-btn>
     </v-app-bar>
     <v-main>
-      <v-container class="justify-center" fluid style="height:100%">
+      <v-container class="justify-center" style="height:100%">
         <v-row v-if="loadingUser" class="justify-center align-center text-center" style="height: 100%">
           <v-col cols="12" md="8">
             <h2 class="my-8">Signing You In</h2>
@@ -94,12 +94,16 @@ export default {
           icon: 'mdi-robot',
           title: 'Personas',
           to: '/personas'
+        },
+        {
+          icon: 'mdi-book-open-page-variant',
+          title: 'Terms of Service',
+          to: '/tos'
         }
       ],
       miniVariant: false,
       right: true,
       rightDrawer: false,
-      title: 'KarlGPT'
     }
   },
   methods: {
